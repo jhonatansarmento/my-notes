@@ -21,7 +21,7 @@ export default function NotesHeader({ firstName }: NotesHeaderProps) {
 
         {/* Usuário + saudação */}
         <div className='flex items-center gap-3'>
-          <span className='hidden sm:block text-sm text-gray-400'>
+          <span className='sm:block text-sm text-gray-400'>
             Bem-vindo,{' '}
             <span className='text-gray-200 font-medium'>{firstName}</span>!
           </span>
