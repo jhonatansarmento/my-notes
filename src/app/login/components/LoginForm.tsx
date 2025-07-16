@@ -1,5 +1,4 @@
 'use client';
-
 import { SignInButton } from '@clerk/nextjs';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
@@ -38,7 +37,11 @@ const LoginForm = () => {
 
             {/* Social Login Buttons */}
             <div className='space-y-3'>
-              <SignInButton>
+              <SignInButton
+                mode='modal'
+                fallbackRedirectUrl='/notes'
+                forceRedirectUrl='/notes'
+              >
                 <Button
                   label='Continuar com Google'
                   icon='pi pi-google'
