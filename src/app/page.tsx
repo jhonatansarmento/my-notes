@@ -1,8 +1,15 @@
+import { auth } from '@clerk/nextjs/server';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 
 const HomePage = async () => {
+  // Se o usuário estiver logado, redirecionar para /notes
+  const { userId } = await auth();
+  if (userId) {
+    redirect('/notes');
+  }
   return (
     <>
       <main className='min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800'>

@@ -5,7 +5,7 @@ import LoginForm from './components/LoginForm';
 const LoginPage = async () => {
   const { userId } = await auth();
   if (userId) {
-    redirect('/');
+    redirect('/notes');
   }
 
   return <LoginForm />;
