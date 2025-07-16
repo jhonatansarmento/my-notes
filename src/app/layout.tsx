@@ -1,12 +1,11 @@
+import { Toaster } from '@/components/ui/sonner';
 import { ClerkProvider } from '@clerk/nextjs';
-import type { Metadata } from 'next';
-import './globals.css';
-
-// PrimeReact imports
 import { dark } from '@clerk/themes';
+import type { Metadata } from 'next';
 import 'primeicons/primeicons.css';
 import 'primereact/resources/primereact.min.css';
 import 'primereact/resources/themes/lara-light-blue/theme.css';
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'My Notes - Organize suas ideias',
@@ -22,7 +21,10 @@ export default function RootLayout({
   return (
     <ClerkProvider appearance={{ baseTheme: dark }}>
       <html lang='pt-br' suppressHydrationWarning>
-        <body className={'antialiased'}>{children}</body>
+        <body className={'antialiased dark'}>
+          {children}
+          <Toaster richColors position='top-right' />
+        </body>
       </html>
     </ClerkProvider>
   );

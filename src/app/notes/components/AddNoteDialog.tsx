@@ -1,21 +1,44 @@
 'use client';
 
 import { createNote } from '@/app/actions/create-note';
-import { Button } from 'primereact/button';
-import { Calendar } from 'primereact/calendar';
-import { Dialog } from 'primereact/dialog';
-import { Dropdown } from 'primereact/dropdown';
-import { InputText } from 'primereact/inputtext';
-import { InputTextarea } from 'primereact/inputtextarea';
-import { Message } from 'primereact/message';
 import { useState } from 'react';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+
+type Priority = 'LOW' | 'MEDIUM' | 'HIGH';
 
 interface Note {
   id: string;
   title: string;
   content: string | null;
   done: boolean;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  priority: Priority;
   createdAt: Date;
   dueDate: Date | null;
   userId: string;
@@ -24,33 +47,34 @@ interface Note {
 interface AddNoteDialogProps {
   visible: boolean;
   onHide: () => void;
-  onNoteAdded: (note?: Note) => void; // Agora pode receber a nota criada
+  onNoteAdded: (note?: Note) => void;
   userId: string;
 }
 
-const AddNoteDialog = ({
+export function AddNoteDialog({
   visible,
   onHide,
   onNoteAdded,
   userId,
-}: AddNoteDialogProps) => {
-  const [formData, setFormData] = useState({
+}: AddNoteDialogProps) {
+  const defaultForm = {
     title: '',
     content: '',
-    priority: 'MEDIUM' as 'LOW' | 'MEDIUM' | 'HIGH',
+    priority: 'MEDIUM' as Priority,
     dueDate: null as Date | null,
-  });
+  };
+
+  const [formData, setFormData] = useState(defaultForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const priorityOptions = [
-    { label: 'Baixa', value: 'LOW', icon: 'pi pi-arrow-down' },
-    { label: 'Média', value: 'MEDIUM', icon: 'pi pi-minus' },
-    { label: 'Alta', value: 'HIGH', icon: 'pi pi-exclamation-triangle' },
-  ];
+  const resetForm = () => {
+    setFormData(defaultForm);
+    setError('');
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
 
     if (!formData.title.trim()) {
       setError('Título é obrigatório');
@@ -69,15 +93,8 @@ const AddNoteDialog = ({
         dueDate: formData.dueDate || undefined,
       });
 
-      // Reset form
-      setFormData({
-        title: '',
-        content: '',
-        priority: 'MEDIUM',
-        dueDate: null,
-      });
-
-      onNoteAdded(newNote); // Passar a nova nota
+      resetForm();
+      onNoteAdded(newNote);
       onHide();
     } catch (err) {
       console.error('Erro ao criar nota:', err);
@@ -88,142 +105,133 @@ const AddNoteDialog = ({
   };
 
   const handleCancel = () => {
-    setFormData({
-      title: '',
-      content: '',
-      priority: 'MEDIUM',
-      dueDate: null,
-    });
-    setError('');
+    resetForm();
     onHide();
   };
 
-  const dialogFooter = (
-    <div className='flex justify-end gap-2'>
-      <Button
-        label='Cancelar'
-        icon='pi pi-times'
-        outlined
-        onClick={handleCancel}
-        disabled={loading}
-      />
-      <Button
-        label='Criar Nota'
-        icon='pi pi-plus'
-        loading={loading}
-        onClick={handleSubmit}
-        severity='success'
-      />
-    </div>
-  );
-
-  const priorityItemTemplate = (option: {
-    label: string;
-    value: string;
-    icon: string;
-  }) => {
-    return (
-      <div className='flex items-center gap-2'>
-        <i className={option.icon}></i>
-        <span>{option.label}</span>
-      </div>
-    );
-  };
-
   return (
-    <Dialog
-      header={
-        <div className='flex items-center gap-2'>
-          <i className='pi pi-plus text-green-600'></i>
-          <span>Nova Nota</span>
-        </div>
-      }
-      visible={visible}
-      onHide={onHide}
-      footer={dialogFooter}
-      style={{ width: '500px' }}
-      modal
-      className='p-fluid'
-    >
-      <form onSubmit={handleSubmit} className='space-y-4'>
-        {error && <Message severity='error' text={error} className='w-full' />}
+    <Dialog open={visible} onOpenChange={onHide}>
+      <DialogContent className='sm:max-w-lg bg-gray-900 border border-gray-800 text-gray-200'>
+        <DialogHeader>
+          <DialogTitle>Nova Nota</DialogTitle>
+          <DialogDescription>
+            Preencha os campos abaixo para criar uma nova nota.
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Título */}
-        <div className='field'>
-          <label htmlFor='title' className='block text-sm font-medium mb-2'>
-            Título *
-          </label>
-          <InputText
-            id='title'
-            value={formData.title}
-            onChange={(e) =>
-              setFormData({ ...formData, title: e.target.value })
-            }
-            placeholder='Digite o título da nota...'
-            className='w-full'
-            disabled={loading}
-            autoFocus
-          />
-        </div>
+        <form onSubmit={handleSubmit} className='space-y-4 py-2' id='note-form'>
+          {error && (
+            <div className='text-red-400 text-sm bg-red-500/10 border border-red-500 rounded-md px-3 py-2'>
+              {error}
+            </div>
+          )}
 
-        {/* Conteúdo */}
-        <div className='field'>
-          <label htmlFor='content' className='block text-sm font-medium mb-2'>
-            Conteúdo
-          </label>
-          <InputTextarea
-            id='content'
-            value={formData.content}
-            onChange={(e) =>
-              setFormData({ ...formData, content: e.target.value })
-            }
-            placeholder='Digite o conteúdo da nota...'
-            rows={4}
-            className='w-full'
-            disabled={loading}
-          />
-        </div>
+          {/* Título */}
+          <div className='flex flex-col gap-2'>
+            <label htmlFor='title' className='text-sm font-medium'>
+              Título *
+            </label>
+            <Input
+              id='title'
+              placeholder='Digite o título da nota...'
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              disabled={loading}
+              autoFocus
+            />
+          </div>
 
-        {/* Prioridade */}
-        <div className='field'>
-          <label htmlFor='priority' className='block text-sm font-medium mb-2'>
-            Prioridade
-          </label>
-          <Dropdown
-            id='priority'
-            value={formData.priority}
-            onChange={(e) => setFormData({ ...formData, priority: e.value })}
-            options={priorityOptions}
-            itemTemplate={priorityItemTemplate}
-            valueTemplate={priorityItemTemplate}
-            className='w-full'
-            disabled={loading}
-          />
-        </div>
+          {/* Conteúdo */}
+          <div className='flex flex-col gap-2'>
+            <label htmlFor='content' className='text-sm font-medium'>
+              Conteúdo
+            </label>
+            <Textarea
+              id='content'
+              placeholder='Digite o conteúdo da nota...'
+              rows={4}
+              value={formData.content}
+              onChange={(e) =>
+                setFormData({ ...formData, content: e.target.value })
+              }
+              disabled={loading}
+            />
+          </div>
 
-        {/* Data de Vencimento */}
-        <div className='field'>
-          <label htmlFor='dueDate' className='block text-sm font-medium mb-2'>
-            Data de Vencimento (opcional)
-          </label>
-          <Calendar
-            id='dueDate'
-            value={formData.dueDate}
-            onChange={(e) =>
-              setFormData({ ...formData, dueDate: e.value as Date })
-            }
-            showTime
-            hourFormat='24'
-            placeholder='Selecione uma data...'
-            className='w-full'
+          {/* Prioridade */}
+          <div className='flex flex-col gap-2'>
+            <label htmlFor='priority' className='text-sm font-medium'>
+              Prioridade
+            </label>
+            <Select
+              value={formData.priority}
+              onValueChange={(value: Priority) =>
+                setFormData({ ...formData, priority: value })
+              }
+              disabled={loading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Selecione a prioridade' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='LOW'>Baixa</SelectItem>
+                <SelectItem value='MEDIUM'>Média</SelectItem>
+                <SelectItem value='HIGH'>Alta</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Data de vencimento */}
+          <div className='flex flex-col gap-2'>
+            <label className='text-sm font-medium'>
+              Data de Vencimento (opcional)
+            </label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant='outline'
+                  className={`justify-start text-left font-normal ${
+                    !formData.dueDate && 'text-muted-foreground'
+                  }`}
+                  disabled={loading}
+                  type='button'
+                >
+                  <CalendarIcon className='mr-2 h-4 w-4' />
+                  {formData.dueDate
+                    ? format(formData.dueDate, 'dd/MM/yyyy')
+                    : 'Selecione uma data'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className='w-auto p-0 bg-gray-900 border border-gray-800'>
+                <Calendar
+                  mode='single'
+                  selected={formData.dueDate || undefined}
+                  onSelect={(date) =>
+                    setFormData({ ...formData, dueDate: date || null })
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </form>
+
+        <DialogFooter className='flex justify-end gap-2 mt-4'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={handleCancel}
             disabled={loading}
-            minDate={new Date()}
-            dateFormat='dd/mm/yy'
-          />
-        </div>
-      </form>
+          >
+            Cancelar
+          </Button>
+          <Button type='submit' form='note-form' disabled={loading}>
+            Criar Nota
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
-};
-
-export default AddNoteDialog;
+}
