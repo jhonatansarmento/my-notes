@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
+import { Note } from '@prisma/client';
 import {
   AlertTriangle,
   ArrowDown,
@@ -26,22 +27,13 @@ import {
   X,
 } from 'lucide-react';
 
-export interface Note {
-  id: string;
-  title: string;
-  content: string | null;
-  done: boolean;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  createdAt: Date;
-  dueDate: Date | null;
-}
-
 interface NoteCardProps {
   note: Note;
   onDelete: (id: string, title: string) => void;
+  onEdit?: (note: Note) => void;
 }
 
-export default function NoteCard({ note, onDelete }: NoteCardProps) {
+export default function NoteCard({ note, onDelete, onEdit }: NoteCardProps) {
   const getPriorityVariant = useCallback((priority: string) => {
     switch (priority) {
       case 'HIGH':
@@ -128,6 +120,7 @@ export default function NoteCard({ note, onDelete }: NoteCardProps) {
             variant='outline'
             size='sm'
             className='border-gray-600 text-gray-400 hover:border-gray-500'
+            onClick={() => onEdit?.(note)} // ✅ chama só se existir
           >
             <Pencil className='h-4 w-4' />
           </Button>

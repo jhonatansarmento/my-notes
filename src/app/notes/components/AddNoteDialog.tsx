@@ -1,7 +1,8 @@
 'use client';
 
 import { createNote } from '@/app/actions/create-note';
-import { useState } from 'react';
+import { updateNote } from '@/app/actions/update-note';
+import { useEffect, useState } from 'react';
 
 import {
   Dialog,
@@ -38,7 +39,7 @@ interface Note {
   title: string;
   content: string | null;
   done: boolean;
-  priority: Priority;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
   createdAt: Date;
   dueDate: Date | null;
   userId: string;
@@ -47,15 +48,19 @@ interface Note {
 interface AddNoteDialogProps {
   visible: boolean;
   onHide: () => void;
-  onNoteAdded: (note?: Note) => void;
+  onNoteAdded?: (note: Note) => void; // usado no modo criar
+  onNoteUpdated?: (note: Note) => void; // usado no modo editar
   userId: string;
+  noteToEdit?: Note | null; // ✅ NOVO: se tiver nota -> modo edição
 }
 
 export function AddNoteDialog({
   visible,
   onHide,
   onNoteAdded,
+  onNoteUpdated,
   userId,
+  noteToEdit,
 }: AddNoteDialogProps) {
   const defaultForm = {
     title: '',
@@ -67,6 +72,22 @@ export function AddNoteDialog({
   const [formData, setFormData] = useState(defaultForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const isEditing = !!noteToEdit;
+
+  // ✅ Quando abrir para edição, popula os campos com os valores da nota
+  useEffect(() => {
+    if (noteToEdit) {
+      setFormData({
+        title: noteToEdit.title,
+        content: noteToEdit.content ?? '',
+        priority: noteToEdit.priority,
+        dueDate: noteToEdit.dueDate ? new Date(noteToEdit.dueDate) : null,
+      });
+    } else {
+      setFormData(defaultForm);
+    }
+  }, [noteToEdit, visible]);
 
   const resetForm = () => {
     setFormData(defaultForm);
@@ -85,20 +106,35 @@ export function AddNoteDialog({
     setError('');
 
     try {
-      const newNote = await createNote({
-        userId,
-        title: formData.title.trim(),
-        content: formData.content.trim() || undefined,
-        priority: formData.priority,
-        dueDate: formData.dueDate || undefined,
-      });
+      if (isEditing && noteToEdit) {
+        // ✅ EDITAR NOTA EXISTENTE
+        const updated = await updateNote({
+          id: noteToEdit.id,
+          title: formData.title.trim(),
+          content: formData.content.trim() || undefined,
+          priority: formData.priority,
+          dueDate: formData.dueDate || undefined,
+        });
+
+        onNoteUpdated?.(updated); // atualiza estado no NotesClient
+      } else {
+        // ✅ CRIAR NOVA NOTA
+        const newNote = await createNote({
+          userId,
+          title: formData.title.trim(),
+          content: formData.content.trim() || undefined,
+          priority: formData.priority,
+          dueDate: formData.dueDate || undefined,
+        });
+
+        onNoteAdded?.(newNote);
+      }
 
       resetForm();
-      onNoteAdded(newNote);
       onHide();
     } catch (err) {
-      console.error('Erro ao criar nota:', err);
-      setError('Erro ao criar nota. Tente novamente.');
+      console.error('Erro ao salvar nota:', err);
+      setError('Erro ao salvar nota. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -113,9 +149,11 @@ export function AddNoteDialog({
     <Dialog open={visible} onOpenChange={onHide}>
       <DialogContent className='sm:max-w-lg bg-gray-900 border border-gray-800 text-gray-200'>
         <DialogHeader>
-          <DialogTitle>Nova Nota</DialogTitle>
+          <DialogTitle>{isEditing ? 'Editar Nota' : 'Nova Nota'}</DialogTitle>
           <DialogDescription>
-            Preencha os campos abaixo para criar uma nova nota.
+            {isEditing
+              ? 'Atualize os campos abaixo e salve as alterações.'
+              : 'Preencha os campos abaixo para criar uma nova nota.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -228,7 +266,7 @@ export function AddNoteDialog({
             Cancelar
           </Button>
           <Button type='submit' form='note-form' disabled={loading}>
-            Criar Nota
+            {isEditing ? 'Salvar Alterações' : 'Criar Nota'}
           </Button>
         </DialogFooter>
       </DialogContent>

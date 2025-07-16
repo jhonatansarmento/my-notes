@@ -19,20 +19,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Note } from '@prisma/client';
 import { Inbox } from 'lucide-react';
-
 import { toast } from 'sonner';
-
-export interface Note {
-  id: string;
-  title: string;
-  content: string | null;
-  done: boolean;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  createdAt: Date;
-  dueDate: Date | null;
-  userId: string;
-}
 
 interface NotesClientProps {
   notes: Note[];
@@ -44,6 +33,7 @@ export default function NotesClient({
   userId,
 }: NotesClientProps) {
   const [notes, setNotes] = useState(initialNotes);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
@@ -88,6 +78,15 @@ export default function NotesClient({
     }
   };
 
+  const handleEditNote = (note: Note) => {
+    setSelectedNote(note);
+    setShowAddDialog(true);
+  };
+
+  const handleNoteUpdated = (updated: Note) => {
+    setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+  };
+
   return (
     <div className='bg-gray-900 text-gray-200'>
       <div className='max-w-6xl mx-auto px-4 py-6'>
@@ -108,7 +107,12 @@ export default function NotesClient({
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             {notes.length > 0 ? (
               notes.map((note) => (
-                <NoteCard key={note.id} note={note} onDelete={confirmDelete} />
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  onDelete={confirmDelete}
+                  onEdit={handleEditNote} // ✅ passa callback
+                />
               ))
             ) : (
               <Card className='p-10 text-center bg-gray-900 border border-gray-800 shadow-md'>
@@ -133,9 +137,14 @@ export default function NotesClient({
       {/* Modal para adicionar nota */}
       <AddNoteDialog
         visible={showAddDialog}
-        onHide={() => setShowAddDialog(false)}
+        onHide={() => {
+          setShowAddDialog(false);
+          setSelectedNote(null);
+        }}
         onNoteAdded={handleNoteAdded}
+        onNoteUpdated={handleNoteUpdated} // ✅ para atualizar no estado
         userId={userId}
+        noteToEdit={selectedNote} // ✅ passa a nota selecionada
       />
 
       {/* Dialog de confirmação de exclusão */}
