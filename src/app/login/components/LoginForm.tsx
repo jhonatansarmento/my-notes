@@ -38,7 +38,7 @@ const LoginForm = () => {
 
             {/* Social Login Buttons */}
             <div className='space-y-3'>
-              <SignInButton mode='modal'>
+              <SignInButton>
                 <Button
                   label='Continuar com Google'
                   icon='pi pi-google'
