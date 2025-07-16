@@ -294,9 +294,6 @@ const NotesClient = ({ notes: initialNotes, userId }: NotesClientProps) => {
         </div>
       </div>
 
-      {/* Toast for notifications */}
-      <Toast ref={toast} />
-
       {/* Toast and Confirm Dialog */}
       <Toast ref={toast} />
       <ConfirmDialog />
