@@ -3,9 +3,14 @@ import { redirect } from 'next/navigation';
 import LoginForm from './components/LoginForm';
 
 const LoginPage = async () => {
-  const { userId } = await auth();
-  if (userId) {
-    redirect('/notes');
+  try {
+    const { userId } = await auth();
+    if (userId) {
+      redirect('/notes');
+    }
+  } catch (error) {
+    console.error('Erro na verificação de autenticação:', error);
+    // Em caso de erro, continua para mostrar a página de login
   }
 
   return <LoginForm />;

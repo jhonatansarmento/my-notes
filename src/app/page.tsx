@@ -5,10 +5,15 @@ import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 
 const HomePage = async () => {
-  // Se o usuário estiver logado, redirecionar para /notes
-  const { userId } = await auth();
-  if (userId) {
-    redirect('/notes');
+  try {
+    // Se o usuário estiver logado, redirecionar para /notes
+    const { userId } = await auth();
+    if (userId) {
+      redirect('/notes');
+    }
+  } catch (error) {
+    console.error('Erro na verificação de autenticação:', error);
+    // Em caso de erro, continua para mostrar a página inicial
   }
   return (
     <>
