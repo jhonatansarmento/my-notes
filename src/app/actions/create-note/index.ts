@@ -14,7 +14,7 @@ interface CreateNoteParams {
 export async function createNote(params: CreateNoteParams) {
   const { userId, title, content, priority = 'MEDIUM', dueDate } = params;
 
-  await db.note.create({
+  const note = await db.note.create({
     data: {
       title,
       content,
@@ -25,4 +25,5 @@ export async function createNote(params: CreateNoteParams) {
   });
 
   revalidatePath('/notes');
+  return note; // Retornar a nota criada
 }
