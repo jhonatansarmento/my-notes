@@ -1,28 +1,20 @@
-import { db } from '@/lib/prisma';
-import { listNotes } from './actions/list-notes';
+import { UserButton } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 
-export default async function NotesPage() {
-  const user = await db.user.findUnique({
-    where: { email: 'alice@example.com' },
-  });
-
-  if (!user) {
-    return <main>Usuário não encontrado</main>;
+const HomePage = async () => {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect('/login');
   }
 
-  // ✅ Agora pega as notas via Server Action
-  const notes = await listNotes(user.id);
-
   return (
-    <main>
-      <h1>📒 Minhas Notas ({user.name})</h1>
-      <ul>
-        {notes.map((note) => (
-          <li key={note.id}>
-            {note.done ? '✅' : '⬜'} {note.title} - {note.priority}
-          </li>
-        ))}
-      </ul>
-    </main>
+    <>
+      <main className='flex items-center justify-center flex-col h-dvh'>
+        <UserButton showName />
+      </main>
+    </>
   );
-}
+};
+
+export default HomePage;
